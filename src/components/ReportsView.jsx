@@ -1,9 +1,8 @@
 import React from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
-import { clients } from "../data";
 
 const fmt = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", notation: "compact", maximumFractionDigits: 1 }).format(v);
@@ -17,7 +16,7 @@ const RISK_PIE_COLORS = {
   Aggressive: "#f97316",
 };
 
-function buildRiskDistribution() {
+function buildRiskDistribution(clients) {
   const map = {};
   clients.forEach((c) => {
     if (!map[c.riskTier]) map[c.riskTier] = 0;
@@ -26,25 +25,24 @@ function buildRiskDistribution() {
   return Object.entries(map).map(([name, value]) => ({ name, value }));
 }
 
-const topClients = [...clients]
-  .sort((a, b) => b.portfolioValue - a.portfolioValue)
-  .slice(0, 5);
+export default function ReportsView({ clients }) {
+  const topClients = [...clients]
+    .sort((a, b) => b.portfolioValue - a.portfolioValue)
+    .slice(0, 5);
 
-const riskData = buildRiskDistribution();
+  const riskData = buildRiskDistribution(clients);
+  const totalAUM = clients.reduce((s, c) => s + c.portfolioValue, 0);
+  const activeClients = clients.filter((c) => c.status === "Active").length;
+  const prospectClients = clients.filter((c) => c.status === "Prospect").length;
+  const avgPortfolio = activeClients > 0 ? totalAUM / activeClients : 0;
 
-const totalAUM = clients.reduce((s, c) => s + c.portfolioValue, 0);
-const activeClients = clients.filter((c) => c.status === "Active").length;
-const prospectClients = clients.filter((c) => c.status === "Prospect").length;
-const avgPortfolio = totalAUM / activeClients;
+  const STAT_CARDS = [
+    { label: "Total AUM", value: fmtFull(totalAUM) },
+    { label: "Active Clients", value: activeClients },
+    { label: "Prospects", value: prospectClients },
+    { label: "Avg Portfolio", value: fmt(avgPortfolio) },
+  ];
 
-const STAT_CARDS = [
-  { label: "Total AUM", value: fmtFull(totalAUM) },
-  { label: "Active Clients", value: activeClients },
-  { label: "Prospects", value: prospectClients },
-  { label: "Avg Portfolio", value: fmt(avgPortfolio) },
-];
-
-export default function ReportsView() {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Reports</h1>

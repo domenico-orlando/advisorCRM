@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { clients, RISK_COLORS } from "../data";
+import { RISK_COLORS } from "../data";
 import { Search, Plus, X } from "lucide-react";
 
 const fmt = (v) =>
@@ -9,27 +9,36 @@ const fmt = (v) =>
 
 const RISK_TIERS = ["Conservative", "Growth", "Aggressive"];
 
-function ClientModal({ client, onClose }) {
+function ClientModal({ client, onSave, onClose }) {
   const [form, setForm] = useState(
-    client || {
-      name: "",
-      email: "",
-      phone: "",
-      riskTier: "Growth",
-      portfolioValue: "",
-      products: [],
-      status: "Active",
-    }
+    client
+      ? { ...client }
+      : {
+          name: "",
+          email: "",
+          phone: "",
+          riskTier: "Growth",
+          portfolioValue: "",
+          products: [],
+          status: "Active",
+          lastContact: new Date().toISOString().slice(0, 10),
+        }
   );
   const [productInput, setProductInput] = useState("");
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const addProduct = () => {
-    if (productInput.trim()) {
-      set("products", [...form.products, productInput.trim()]);
+    const trimmed = productInput.trim();
+    if (trimmed) {
+      set("products", [...form.products, trimmed]);
       setProductInput("");
     }
+  };
+
+  const handleSave = () => {
+    onSave({ ...form, portfolioValue: Number(form.portfolioValue) || 0 });
+    onClose();
   };
 
   return (
@@ -104,20 +113,21 @@ function ClientModal({ client, onClose }) {
 
         <div className="flex justify-end gap-2 mt-6">
           <button onClick={onClose} className="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50">Cancel</button>
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded bg-orange-500 text-white hover:bg-orange-600">Save</button>
+          <button onClick={handleSave} className="px-4 py-2 text-sm rounded bg-orange-500 text-white hover:bg-orange-600">Save</button>
         </div>
       </div>
     </div>
   );
 }
 
-export default function ClientsView() {
+export default function ClientsView({ clients, onSaveClient }) {
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState("All");
   const [modal, setModal] = useState(null); // null | "new" | client object
 
   const filtered = clients.filter((c) => {
-    const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) ||
+    const matchSearch =
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase());
     const matchRisk = riskFilter === "All" || c.riskTier === riskFilter;
     return matchSearch && matchRisk;
@@ -157,7 +167,9 @@ export default function ClientsView() {
               key={tier}
               onClick={() => setRiskFilter(tier)}
               className={`px-3 py-2 rounded text-xs font-medium transition-colors ${
-                riskFilter === tier ? "bg-orange-500 text-white" : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-50"
+                riskFilter === tier
+                  ? "bg-orange-500 text-white"
+                  : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-50"
               }`}
             >
               {tier}
@@ -249,6 +261,7 @@ export default function ClientsView() {
       {modal && (
         <ClientModal
           client={modal === "new" ? null : modal}
+          onSave={onSaveClient}
           onClose={() => setModal(null)}
         />
       )}

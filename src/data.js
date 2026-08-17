@@ -279,16 +279,4 @@ export const RISK_COLORS = {
   Aggressive: "bg-orange-100 text-orange-800",
 };
 
-export const FOLLOW_UP_COLORS = {
-  Scheduled: "border border-orange-500 text-orange-600",
-  "Follow-up sent": "border border-orange-500 text-orange-600",
-  Completed: "border border-orange-500 text-orange-600",
-};
-
-export const FOLLOW_UP_BG = {
-  Scheduled: "",
-  "Follow-up sent": "",
-  Completed: "",
-};
-
 export const PIPELINE_STAGES = ["Discovery", "Proposal", "Negotiation", "Closed Won", "Closed Lost"];

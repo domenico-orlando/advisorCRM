@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { appointments, followUps, RISK_COLORS } from "../data";
+import { appointments, RISK_COLORS } from "../data";
 
 const TODAY = "2026-08-17";
 
@@ -14,12 +14,17 @@ const DAYS = [
 const STATUS_STYLE = {
   Scheduled: "border border-orange-500 text-orange-600",
   "Follow-up sent": "border border-orange-500 text-orange-600",
-  Completed: "border border-orange-500 text-orange-600",
+  Completed: "border border-green-600 text-green-600",
 };
 
-function FollowUpModal({ followUp, onClose }) {
+function FollowUpModal({ followUp, onSave, onClose }) {
   const [status, setStatus] = useState(followUp.status);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(followUp.notes || "");
+
+  const handleSave = () => {
+    onSave({ ...followUp, status, notes });
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
@@ -48,7 +53,7 @@ function FollowUpModal({ followUp, onClose }) {
           <button onClick={onClose} className="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-50">
             Cancel
           </button>
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded bg-orange-500 text-white hover:bg-orange-600">
+          <button onClick={handleSave} className="px-4 py-2 text-sm rounded bg-orange-500 text-white hover:bg-orange-600">
             Save
           </button>
         </div>
@@ -57,10 +62,12 @@ function FollowUpModal({ followUp, onClose }) {
   );
 }
 
-export default function CalendarView() {
+export default function CalendarView({ followUps, onSaveFollowUp }) {
   const [selectedFollowUp, setSelectedFollowUp] = useState(null);
   const todayAppts = appointments.filter((a) => a.date === TODAY);
-  const dueTodayFollowUps = followUps.filter((f) => f.dueDate <= TODAY && f.status !== "Completed");
+  const dueTodayFollowUps = followUps.filter(
+    (f) => f.dueDate <= TODAY && f.status !== "Completed"
+  );
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -108,7 +115,9 @@ export default function CalendarView() {
       <div className="w-full lg:w-80 shrink-0">
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
           <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">Today</p>
-          <p className="font-bold text-lg">{todayAppts.length} appointment{todayAppts.length !== 1 ? "s" : ""} today</p>
+          <p className="font-bold text-lg">
+            {todayAppts.length} appointment{todayAppts.length !== 1 ? "s" : ""} today
+          </p>
           <p className="text-sm text-gray-600">{dueTodayFollowUps.length} follow-ups need attention</p>
         </div>
 
@@ -134,7 +143,11 @@ export default function CalendarView() {
       </div>
 
       {selectedFollowUp && (
-        <FollowUpModal followUp={selectedFollowUp} onClose={() => setSelectedFollowUp(null)} />
+        <FollowUpModal
+          followUp={selectedFollowUp}
+          onSave={onSaveFollowUp}
+          onClose={() => setSelectedFollowUp(null)}
+        />
       )}
     </div>
   );
