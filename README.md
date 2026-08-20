@@ -19,7 +19,7 @@ npm run build
 
 This repository is configured for GitHub Pages deployment from the `main` branch using the workflow at:
 
-`/home/runner/work/advisorCRM/advisorCRM/.github/workflows/deploy-pages.yml`
+`.github/workflows/deploy-pages.yml`
 
 To publish:
 
