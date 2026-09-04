@@ -2,7 +2,26 @@
 
 A financial-advisor CRM built for desktop and mobile: calendar-first appointment scheduling, client households with risk tier and portfolio detail, a follow-up/task tracker, a pipeline board, a product catalog with suitability rules, and portfolio reports.
 
-React + TypeScript + Vite. The layout, spacing, and the Modernist type/color system are ported pixel-for-pixel from the `Advisor Desk CRM` design produced in Claude Design.
+React + TypeScript + Vite.
+
+## Design system
+
+The interface follows the **Advisor CRM design system** (`src/styles/tokens.css`), derived from the Allianz corporate identity and the NDBX "Expert" (B2B/B2E) expression: Allianz Blue `#003781` for identity and the primary action, a blue-ink navigation rail, cool blue-grey neutrals, 0/2/4px radii, hairline dividers and blue-ink-tinted shadows.
+
+Ten rules carry the family feeling across every screen:
+
+1. Brand blue appears on every screen, but on ≤20% of its surface.
+2. Exactly one primary button per view.
+3. Secondary actions are outlined in brand blue, never grey.
+4. Radii are 0, 2 or 4px; pill only for chips and avatars.
+5. Shadows are blue-ink tinted and rare — hierarchy comes from borders and tone.
+6. Status colours live in badges and 3px accent edges only.
+7. Sentence case everywhere; no caps, no letter-spacing.
+8. Every digit is tabular; money is right-aligned.
+9. Errors state the cause and the next step in one line.
+10. The official logo is placed, never redrawn.
+
+Two notes on brand governance. **Allianz Neo** is a licensed corporate typeface — the stack in `--font` names it first and falls back to Segoe UI for development; load the real face from the internal CDN before shipping. And no Allianz logo or wordmark is drawn anywhere in this repo: the rail shows the firm name from `src/config.ts`, which is where the official asset should be placed.
 
 ## Screens
 

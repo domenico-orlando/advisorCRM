@@ -4,7 +4,7 @@ import { Panel } from "../components/Panel";
 import { MonthGrid } from "../components/MonthGrid";
 import { BookingConfirmationBanner } from "../components/BookingConfirmationBanner";
 import { config } from "../config";
-import { money } from "../utils/format";
+import { money, stageBadgeClass, tierBadgeClass } from "../utils/format";
 import { apptsOn, byId, isOverdue, openTasks, tierBars, totalAum } from "../utils/selectors";
 import {
   addDays, dayNum, displayTime, dowShort, dueLabel, isToday, longDate,
@@ -46,7 +46,7 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
     : calMode === "day" ? "Appointments this day" : "Appointments this week";
 
   const kpis = [
-    { label: periodLabel, value: String(periodCount), sub: `${dayList.length} on ${isToday(viewDate) ? "today" : shortDate(viewDate)}` },
+    { label: periodLabel, value: String(periodCount), sub: isToday(viewDate) ? `${dayList.length} today` : `${dayList.length} on ${shortDate(viewDate)}` },
     { label: "Follow-ups open", value: String(open.length), sub: `${overdue.length} overdue` },
     { label: "Assets under advice", value: money(totalAum(), currency), sub: `${CLIENTS.length} households` },
     { label: "Pipeline value", value: money(pipelineOpen.reduce((a, d) => a + d.value, 0), currency), sub: `${pipelineOpen.length} open opportunities` },
@@ -69,17 +69,22 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
           <button type="button" className="btn btn-secondary btn-icon" title="Next" aria-label="Next period" onClick={() => actions.shiftView(1)}>→</button>
         </div>
 
-        <div className="seg">
+        <div className="chip-row" role="group" aria-label="Calendar view">
           {(["month", "week", "day"] as const).map((mode) => (
-            <label className="seg-opt" key={mode}>
-              <input type="radio" name="calmode" checked={calMode === mode} onChange={() => actions.setCalMode(mode)} />
-              <span>{mode[0].toUpperCase() + mode.slice(1)}</span>
-            </label>
+            <button
+              type="button"
+              key={mode}
+              className={"chip-btn" + (calMode === mode ? " chip-btn-on" : "")}
+              aria-pressed={calMode === mode}
+              onClick={() => actions.setCalMode(mode)}
+            >
+              {mode[0].toUpperCase() + mode.slice(1)}
+            </button>
           ))}
         </div>
 
-        <button type="button" className="btn btn-primary" style={{ minHeight: 44 }} onClick={() => actions.openNew()}>
-          + New appointment
+        <button type="button" className="btn btn-primary" onClick={() => actions.openNew()}>
+          New appointment
         </button>
       </div>
 
@@ -135,7 +140,7 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
                           onClick={() => actions.openNew(date)}
                           title={`Book an appointment on ${longDate(date)}`}
                         >
-                          + Add
+                          Add
                         </button>
                       </div>
                     </div>
@@ -152,7 +157,7 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
                   <button
                     type="button"
                     key={date}
-                    className={"day-tab" + (viewDate === date ? " navactive" : "")}
+                    className={"day-tab" + (viewDate === date ? " day-tab-on" : "")}
                     onClick={() => actions.setViewDate(date)}
                   >
                     {dowShort(date)} {dayNum(date)}
@@ -171,9 +176,9 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
                           <span className="day-appt-client">{c.name}</span>
                           <span className="day-appt-meta">{a.type} · {a.mode} · {a.durationMin} min</span>
                           <span className="day-appt-tags">
-                            <span className="tag tag-outline">{c.tier}</span>
-                            <span className="tag tag-accent">{stage}</span>
-                            {a.confirmationEmailedAt && <span className="tag tag-neutral">✓ Confirmation emailed</span>}
+                            <span className={tierBadgeClass(c.tier)}>{c.tier}</span>
+                            <span className={stageBadgeClass(stage)}>{stage}</span>
+                            {a.confirmationEmailedAt && <span className="badge b-ok">Confirmation emailed</span>}
                           </span>
                         </span>
                       </button>
@@ -183,7 +188,7 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
                         onClick={() => actions.emailAppointment(a.id)}
                         title={`Email a confirmation to ${c.email}`}
                       >
-                        ✉ Email confirmation
+                        Email confirmation
                       </button>
                     </div>
                   );
@@ -198,7 +203,7 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
                 )}
                 {dayList.length > 0 && (
                   <button type="button" className="day-add day-add-wide" onClick={() => actions.openNew(viewDate)}>
-                    + Add an appointment on {shortDate(viewDate)}
+                    Add an appointment on {shortDate(viewDate)}
                   </button>
                 )}
               </div>
@@ -210,13 +215,13 @@ export function CalendarScreen({ store }: { store: CrmStore }) {
           <Panel title="Due today">
             {dueNow.map((t) => (
               <div className="task-row" key={t.id}>
-                <button
-                  type="button"
-                  className={"task-checkbox" + (t.done ? " boxdone" : "")}
-                  onClick={() => actions.toggleTask(t.id)}
-                >
-                  {t.done ? "✓" : ""}
-                </button>
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  checked={Boolean(t.done)}
+                  onChange={() => actions.toggleTask(t.id)}
+                  aria-label={`Mark "${t.title}" as done`}
+                />
                 <span className="task-copy">
                   <span className="task-title">{t.title}</span>
                   <span className="task-meta">

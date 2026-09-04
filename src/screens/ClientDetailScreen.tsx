@@ -1,7 +1,7 @@
 import type { CrmStore } from "../state/useCrmStore";
 import { Panel } from "../components/Panel";
 import { config } from "../config";
-import { full, money, tierTagClass } from "../utils/format";
+import { full, money, percent, stageBadgeClass, tierBadgeClass } from "../utils/format";
 import { stageOf } from "../utils/selectors";
 import { dueLabel } from "../utils/date";
 
@@ -24,8 +24,8 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
     { label: "Risk tier", value: `${c.tier} (${c.risk}/10)` },
   ];
   const perfRows = [
-    { label: "YTD", value: `+${c.ytd.toFixed(1)}%`, cls: "pos" },
-    { label: "1 year", value: `+${c.yr1.toFixed(1)}%`, cls: "pos" },
+    { label: "YTD", value: percent(c.ytd, currency), cls: "pos" },
+    { label: "1 year", value: percent(c.yr1, currency), cls: "pos" },
     { label: "Net new · 12mo", value: money(c.contrib, currency), cls: "" },
   ];
 
@@ -36,14 +36,16 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
       </button>
 
       <div className="detail-header">
+        <span className="avatar avatar-lg">{c.name.slice(0, 2).toUpperCase()}</span>
         <div className="push">
-          <div className="eyebrow">Client since {c.since}</div>
           <h1 className="detail-name">{c.name}</h1>
-          <div className="detail-sub">{c.primary} · {c.city}</div>
+          <div className="detail-sub">
+            <span>{c.primary}</span><span>{c.city}</span><span>Client since {c.since}</span>
+          </div>
         </div>
         <div className="detail-tags">
-          <span className={tierTagClass(c.tier)}>{c.tier} · risk {c.risk}/10</span>
-          <span className="tag tag-outline">{stage}</span>
+          <span className={tierBadgeClass(c.tier)}>{c.tier} · risk {c.risk}/10</span>
+          <span className={stageBadgeClass(stage)}>{stage}</span>
         </div>
       </div>
 
@@ -92,8 +94,8 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
                   <tr>
                     <th style={{ textAlign: "left" }}>Product</th>
                     <th style={{ textAlign: "left" }}>Account</th>
-                    <th style={{ textAlign: "right" }}>Value</th>
-                    <th style={{ textAlign: "right" }}>Alloc</th>
+                    <th className="num">Value</th>
+                    <th className="num">Alloc</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -101,8 +103,8 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
                     <tr key={h.account}>
                       <td style={{ fontWeight: 600 }}>{h.product}</td>
                       <td className="text-muted" style={{ fontSize: 12 }}>{h.account}</td>
-                      <td style={{ textAlign: "right" }}>{full(Math.round((c.value * h.pct) / 100), currency)}</td>
-                      <td style={{ textAlign: "right" }}>{h.pct}%</td>
+                      <td className="num">{full(Math.round((c.value * h.pct) / 100), currency)}</td>
+                      <td className="num">{h.pct}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -140,24 +142,25 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
           <Panel title="Follow-up notes & tasks">
             {selTasks.map((t) => (
               <div className="task-row" key={t.id}>
-                <button
-                  type="button"
-                  className={"task-checkbox" + (t.done ? " boxdone" : "")}
-                  onClick={() => actions.toggleTask(t.id)}
-                >
-                  {t.done ? "✓" : ""}
-                </button>
+                <input
+                  type="checkbox"
+                  className="checkbox"
+                  style={{ marginTop: 3 }}
+                  checked={Boolean(t.done)}
+                  onChange={() => actions.toggleTask(t.id)}
+                  aria-label={`Mark "${t.title}" as done`}
+                />
                 <span style={{ flex: 1 }}>
                   <span className={"task-title" + (t.done ? " text-muted strike" : "")} style={{ display: "block" }}>{t.title}</span>
                   <span className="task-note">{t.note}</span>
                   <span className="task-tags">
-                    <span className="tag tag-neutral">{t.stage}</span>
-                    <span className="tag tag-outline">Due {dueLabel(t.due)}</span>
+                    <span className="badge b-neutral">{t.stage}</span>
+                    <span className="badge b-info">Due {dueLabel(t.due).toLowerCase()}</span>
                   </span>
                 </span>
               </div>
             ))}
-            <div className="freeform-note">{c.note}</div>
+            <div className="freeform-note"><span>{c.note}</span></div>
           </Panel>
 
           <Panel title="Activity timeline">

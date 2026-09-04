@@ -43,6 +43,7 @@ export interface TierBar {
   name: string;
   valueFmt: string;
   clients: number;
+  householdsLabel: string;
   pct: number;
 }
 
@@ -51,7 +52,7 @@ export function tierBars(currency: string): TierBar[] {
   return TIER_NAMES.map((n) => {
     const set = CLIENTS.filter((c) => c.tier === n);
     const v = set.reduce((a, c) => a + c.value, 0);
-    return { name: n, valueFmt: money(v, currency), clients: set.length, pct: Math.round((v / aum) * 100) };
+    return { name: n, valueFmt: money(v, currency), clients: set.length, householdsLabel: set.length === 1 ? "household" : "households", pct: Math.round((v / aum) * 100) };
   });
 }
 

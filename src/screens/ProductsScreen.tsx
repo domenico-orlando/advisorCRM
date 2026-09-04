@@ -2,7 +2,7 @@ import { NEXT_ACTIONS, PRODUCTS, TIER_NAMES, TIER_RISK } from "../data/mock";
 import type { CrmStore } from "../state/useCrmStore";
 import { Panel } from "../components/Panel";
 import { config } from "../config";
-import { money, tierTagClass } from "../utils/format";
+import { money, tierBadgeClass } from "../utils/format";
 import { byId } from "../utils/selectors";
 
 function productFamilies(): string[] {
@@ -26,12 +26,17 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
           <div className="eyebrow">Product configuration</div>
           <h1 className="page-title">{activeCount} of {PRODUCTS.length} products enabled for sale</h1>
         </div>
-        <div className="seg" style={{ flexWrap: "wrap" }}>
+        <div className="chip-row" role="group" aria-label="Filter by product family">
           {families.map((f) => (
-            <label className="seg-opt" style={{ minHeight: 44 }} key={f}>
-              <input type="radio" name="famfilter" checked={state.family === f} onChange={() => actions.setFamily(f)} />
-              <span>{f}</span>
-            </label>
+            <button
+              type="button"
+              key={f}
+              className={"chip-btn" + (state.family === f ? " chip-btn-on" : "")}
+              aria-pressed={state.family === f}
+              onClick={() => actions.setFamily(f)}
+            >
+              {f}
+            </button>
           ))}
         </div>
       </div>
@@ -43,8 +48,8 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
               <th style={{ textAlign: "left" }}>Product</th>
               <th style={{ textAlign: "left" }}>Family</th>
               <th style={{ textAlign: "left" }}>Suitable risk bands</th>
-              <th style={{ textAlign: "right" }}>Minimum</th>
-              <th style={{ textAlign: "right" }}>Advisory fee</th>
+              <th className="num">Minimum</th>
+              <th className="num">Advisory fee</th>
               <th style={{ textAlign: "left" }}>Share class / wrapper</th>
               <th style={{ textAlign: "left" }}>Approvals</th>
               <th style={{ textAlign: "left" }}>Sale</th>
@@ -68,17 +73,19 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
                       <span className="band-label">{p.lo}–{p.hi}</span>
                     </span>
                   </td>
-                  <td style={{ textAlign: "right" }}>{p.min === 0 ? "—" : money(p.min, currency)}</td>
-                  <td style={{ textAlign: "right" }}>{p.fee}</td>
+                  <td className="num">{p.min === 0 ? "—" : money(p.min, currency)}</td>
+                  <td className="num">{p.fee}</td>
                   <td style={{ fontSize: 12 }}>{p.wrapper}</td>
                   <td style={{ fontSize: 12 }}>{p.approval}</td>
                   <td>
                     <button
                       type="button"
-                      className={on ? "btn btn-primary" : "btn btn-secondary"}
-                      style={{ minHeight: 36, minWidth: 92 }}
+                      role="switch"
+                      aria-checked={on}
+                      className={"toggle-row" + (on ? "" : " toggle-off")}
                       onClick={() => actions.toggleProductDisabled(p.code)}
                     >
+                      <span className="toggle" />
                       {on ? "Enabled" : "Disabled"}
                     </button>
                   </td>
@@ -96,7 +103,7 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
               <thead>
                 <tr>
                   <th style={{ textAlign: "left" }}>Risk tier</th>
-                  <th style={{ textAlign: "right" }}>Eligible products</th>
+                  <th className="num">Eligible products</th>
                   <th style={{ textAlign: "left" }}>Excluded</th>
                 </tr>
               </thead>
@@ -107,8 +114,8 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
                   const no = liveProducts.filter((p) => risk < p.lo || risk > p.hi);
                   return (
                     <tr key={n}>
-                      <td><span className={tierTagClass(n)}>{n}</span></td>
-                      <td style={{ textAlign: "right", fontWeight: 700 }}>{ok.length} of {liveProducts.length}</td>
+                      <td><span className={tierBadgeClass(n)}>{n}</span></td>
+                      <td className="num"><b>{ok.length} of {liveProducts.length}</b></td>
                       <td className="text-muted" style={{ fontSize: 12 }}>{no.length ? no.map((p) => p.code).join(", ") : "None"}</td>
                     </tr>
                   );
@@ -128,7 +135,7 @@ export function ProductsScreen({ store }: { store: CrmStore }) {
                   <span className="next-action-name">{p.name}</span>
                   <span className="next-action-reason">{n.reason}</span>
                 </span>
-                <button type="button" className="btn btn-ghost" style={{ minHeight: 44 }} onClick={() => actions.openClient(c.id)}>{c.name}</button>
+                <button type="button" className="btn btn-ghost" onClick={() => actions.openClient(c.id)}>{c.name}</button>
                 <span className="next-action-value">{money(n.value, currency)}</span>
               </div>
             );

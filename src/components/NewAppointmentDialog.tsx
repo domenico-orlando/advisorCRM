@@ -117,7 +117,7 @@ export function NewAppointmentDialog({ store }: { store: CrmStore }) {
         {valid && (
           <div className="appt-summary">
             {longDate(form.date)} · {displayTime(form.time)} – {endTime} · {form.mode}
-            {inPast && <span className="appt-warning"> · this date is in the past</span>}
+            {inPast && <span className="appt-warning">This date is in the past — the client will still receive the confirmation.</span>}
           </div>
         )}
 
@@ -125,27 +125,27 @@ export function NewAppointmentDialog({ store }: { store: CrmStore }) {
           <input
             id="appt-email"
             type="checkbox"
+            className="checkbox"
             checked={form.sendEmail}
             onChange={(e) => actions.updateNewAppt({ sendEmail: e.target.checked })}
           />
           <span>
             Email a confirmation to <strong>{client.email}</strong>
-            <span className="field-hint">Opens the draft in your mail client — nothing sends automatically.</span>
+            <span className="field-hint">Opens a draft in your mail client — nothing sends automatically.</span>
           </span>
         </label>
 
         <div className="dialog-actions">
+          <button type="button" className="btn btn-ghost" onClick={actions.closeNew}>
+            Cancel
+          </button>
           <button
             type="button"
             className="btn btn-primary"
-            style={{ minHeight: 44 }}
             disabled={!valid}
             onClick={actions.confirmNew}
           >
-            {form.sendEmail ? "Confirm & email client" : "Confirm appointment"}
-          </button>
-          <button type="button" className="btn btn-secondary" style={{ minHeight: 44 }} onClick={actions.closeNew}>
-            Cancel
+            {form.sendEmail ? "Confirm and email client" : "Confirm appointment"}
           </button>
         </div>
       </div>

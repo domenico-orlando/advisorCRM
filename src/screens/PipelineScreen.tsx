@@ -24,10 +24,10 @@ export function PipelineScreen({ store }: { store: CrmStore }) {
           return (
             <section className="pipeline-col" key={stage}>
               <div className="pipeline-col-head">
-                <div style={{ fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>{stage}</div>
+                <div>{stage}</div>
                 <div className="pipeline-col-sum">
-                  <span style={{ fontFamily: "var(--font-heading)", fontWeight: 800, fontSize: 20 }}>{money(sum, currency)}</span>
-                  <span className="text-muted" style={{ fontSize: 12 }}>{set.length} deals</span>
+                  <span className="pipeline-col-total">{money(sum, currency)}</span>
+                  <span className="pipeline-col-count">{set.length} {set.length === 1 ? "deal" : "deals"}</span>
                 </div>
               </div>
               <div className="pipeline-col-body">
@@ -41,8 +41,8 @@ export function PipelineScreen({ store }: { store: CrmStore }) {
                       <span className="deal-foot">
                         <span className="deal-value">{full(d.value, currency)}</span>
                         <span className="deal-controls">
-                          <button type="button" className="btn btn-secondary btn-icon" title="Back a stage" onClick={() => actions.moveDeal(d.id, -1)}>←</button>
-                          <button type="button" className="btn btn-secondary btn-icon" title="Advance a stage" onClick={() => actions.moveDeal(d.id, 1)}>→</button>
+                          <button type="button" className="btn btn-secondary btn-icon" title="Back a stage" aria-label="Back a stage" onClick={() => actions.moveDeal(d.id, -1)}>←</button>
+                          <button type="button" className="btn btn-secondary btn-icon" title="Advance a stage" aria-label="Advance a stage" onClick={() => actions.moveDeal(d.id, 1)}>→</button>
                         </span>
                       </span>
                     </div>

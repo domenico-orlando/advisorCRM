@@ -114,6 +114,8 @@ export interface CrmConfig {
   advisorName: string;
   advisorEmail: string;
   firmName: string;
+  /** Sub-label under the wordmark in the navigation rail. */
+  productName: string;
   defaultScreen: Screen;
   showSaturday: boolean;
   currency: "USD" | "EUR" | "GBP";

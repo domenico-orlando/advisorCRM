@@ -2,7 +2,7 @@ import { CLIENTS } from "../data/mock";
 import type { CrmStore } from "../state/useCrmStore";
 import { Panel } from "../components/Panel";
 import { config } from "../config";
-import { full, money, tierTagClass } from "../utils/format";
+import { full, money, percent, tierBadgeClass } from "../utils/format";
 import { blendedYtd, productCoverageRows, tierBars, totalAum } from "../utils/selectors";
 
 export function ReportsScreen({ store }: { store: CrmStore }) {
@@ -17,7 +17,7 @@ export function ReportsScreen({ store }: { store: CrmStore }) {
 
   const kpis = [
     { label: "Assets under advice", value: money(aum, currency), sub: `Across ${CLIENTS.length} households` },
-    { label: "Blended YTD", value: `+${blended.toFixed(1)}%`, sub: "Asset-weighted" },
+    { label: "Blended YTD", value: percent(blended, currency), sub: "Asset-weighted" },
     { label: "Average household", value: money(Math.round(aum / CLIENTS.length), currency), sub: `Median ${money(median, currency)}` },
     { label: "Net new · 12mo", value: money(CLIENTS.reduce((a, c) => a + c.contrib, 0), currency), sub: "Contributions and transfers" },
   ];
@@ -31,9 +31,9 @@ export function ReportsScreen({ store }: { store: CrmStore }) {
 
       <div className="kpi-strip">
         {kpis.map((k) => (
-          <div className="kpi-cell lg" key={k.label}>
+          <div className="kpi-cell" key={k.label}>
             <div className="kpi-label">{k.label}</div>
-            <div className="kpi-value lg">{k.value}</div>
+            <div className="kpi-value">{k.value}</div>
             <div className="kpi-sub">{k.sub}</div>
           </div>
         ))}
@@ -41,12 +41,12 @@ export function ReportsScreen({ store }: { store: CrmStore }) {
 
       <div className="two-col">
         <Panel title="Assets by risk tier">
-          <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ padding: "var(--s-4)", display: "flex", flexDirection: "column", gap: "var(--s-4)" }}>
             {bars.map((b) => (
               <div className="bar-row" key={b.name} style={{ padding: 0, border: 0 }}>
                 <span className="bar-label-row lg">
                   <span style={{ fontWeight: 600 }}>{b.name}</span>
-                  <span className="text-muted">{b.valueFmt} · {b.clients} hh</span>
+                  <span className="text-muted num">{b.valueFmt} · {b.clients} {b.householdsLabel}</span>
                 </span>
                 <span className="bar-track lg">
                   <span className="bar-fill" style={{ width: `${b.pct}%` }} />
@@ -62,16 +62,16 @@ export function ReportsScreen({ store }: { store: CrmStore }) {
               <thead>
                 <tr>
                   <th style={{ textAlign: "left" }}>Product</th>
-                  <th style={{ textAlign: "right" }}>Households</th>
-                  <th style={{ textAlign: "right" }}>Assets</th>
+                  <th className="num">Households</th>
+                  <th className="num">Assets</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map((p) => (
                   <tr key={p.name}>
-                    <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td style={{ textAlign: "right" }}>{p.count}</td>
-                    <td style={{ textAlign: "right" }}>{p.valueFmt}</td>
+                    <td><b>{p.name}</b></td>
+                    <td className="num">{p.count}</td>
+                    <td className="num">{p.valueFmt}</td>
                   </tr>
                 ))}
               </tbody>
@@ -87,20 +87,20 @@ export function ReportsScreen({ store }: { store: CrmStore }) {
               <tr>
                 <th style={{ textAlign: "left" }}>Household</th>
                 <th style={{ textAlign: "left" }}>Tier</th>
-                <th style={{ textAlign: "right" }}>Portfolio</th>
-                <th style={{ textAlign: "right" }}>YTD</th>
-                <th style={{ textAlign: "right" }}>Share of book</th>
+                <th className="num">Portfolio</th>
+                <th className="num">YTD</th>
+                <th className="num">Share of book</th>
                 <th style={{ textAlign: "left" }}>Last review</th>
               </tr>
             </thead>
             <tbody>
               {CLIENTS.map((c) => (
                 <tr className="clickable-row" key={c.id} onClick={() => actions.openClient(c.id)}>
-                  <td style={{ fontWeight: 700 }}>{c.name}</td>
-                  <td><span className={tierTagClass(c.tier)}>{c.tier}</span></td>
-                  <td style={{ textAlign: "right" }}>{full(c.value, currency)}</td>
-                  <td className="pos" style={{ textAlign: "right" }}>+{c.ytd.toFixed(1)}%</td>
-                  <td style={{ textAlign: "right" }}>{Math.round((c.value / aum) * 100)}%</td>
+                  <td><b>{c.name}</b></td>
+                  <td><span className={tierBadgeClass(c.tier)}>{c.tier}</span></td>
+                  <td className="num">{full(c.value, currency)}</td>
+                  <td className="num"><span className="pos">{percent(c.ytd, currency)}</span></td>
+                  <td className="num">{Math.round((c.value / aum) * 100)}%</td>
                   <td style={{ fontSize: 12 }}>{c.lastReview}</td>
                 </tr>
               ))}

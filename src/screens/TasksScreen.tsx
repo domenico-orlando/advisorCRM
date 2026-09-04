@@ -2,7 +2,7 @@ import { STAGES } from "../data/mock";
 import type { CrmStore } from "../state/useCrmStore";
 import { byId, isOverdue, openTasks } from "../utils/selectors";
 import { dueLabel } from "../utils/date";
-import { stageTagClass } from "../utils/format";
+import { stageBadgeClass } from "../utils/format";
 
 export function TasksScreen({ store }: { store: CrmStore }) {
   const { state, actions } = store;
@@ -18,12 +18,17 @@ export function TasksScreen({ store }: { store: CrmStore }) {
           <div className="eyebrow">Follow-up tracker</div>
           <h1 className="page-title">{openTasks(tasks).length} open · {overdueCount} overdue</h1>
         </div>
-        <div className="seg" style={{ flexWrap: "wrap" }}>
+        <div className="chip-row" role="group" aria-label="Filter by stage">
           {filters.map((f) => (
-            <label className="seg-opt" style={{ minHeight: 44 }} key={f}>
-              <input type="radio" name="stagefilter" checked={state.filter === f} onChange={() => actions.setFilter(f)} />
-              <span>{f}</span>
-            </label>
+            <button
+              type="button"
+              key={f}
+              className={"chip-btn" + (state.filter === f ? " chip-btn-on" : "")}
+              aria-pressed={state.filter === f}
+              onClick={() => actions.setFilter(f)}
+            >
+              {f}
+            </button>
           ))}
         </div>
       </div>
@@ -31,13 +36,14 @@ export function TasksScreen({ store }: { store: CrmStore }) {
       <div className="panel">
         {rows.map((t) => (
           <div className="task-row-wide" key={t.id}>
-            <button
-              type="button"
-              className={"task-checkbox lg" + (t.done ? " boxdone" : "")}
-              onClick={() => actions.toggleTask(t.id)}
-            >
-              {t.done ? "✓" : ""}
-            </button>
+            <input
+              type="checkbox"
+              className="checkbox"
+              style={{ marginTop: 3 }}
+              checked={Boolean(t.done)}
+              onChange={() => actions.toggleTask(t.id)}
+              aria-label={`Mark "${t.title}" as done`}
+            />
             <div className="task-col-main">
               <div className={"task-title" + (t.done ? " text-muted strike" : "")}>{t.title}</div>
               <div className="task-meta">{t.note}</div>
@@ -50,8 +56,8 @@ export function TasksScreen({ store }: { store: CrmStore }) {
               <div className="text-muted">{t.priority} priority</div>
             </div>
             <div className="task-col-stage">
-              <span className={stageTagClass(t.stage)}>{t.stage}</span>
-              <button type="button" className="btn btn-secondary btn-icon" title="Advance stage" style={{ minHeight: 36 }} onClick={() => actions.advanceTask(t.id)}>
+              <span className={stageBadgeClass(t.stage)}>{t.stage}</span>
+              <button type="button" className="btn btn-secondary btn-icon" title="Advance stage" aria-label="Advance stage" onClick={() => actions.advanceTask(t.id)}>
                 →
               </button>
             </div>
