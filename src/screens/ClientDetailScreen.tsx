@@ -3,6 +3,7 @@ import { Panel } from "../components/Panel";
 import { config } from "../config";
 import { full, money, tierTagClass } from "../utils/format";
 import { stageOf } from "../utils/selectors";
+import { dueLabel } from "../utils/date";
 
 export function ClientDetailScreen({ store }: { store: CrmStore }) {
   const { state, selectedClient: c, actions } = store;
@@ -151,7 +152,7 @@ export function ClientDetailScreen({ store }: { store: CrmStore }) {
                   <span className="task-note">{t.note}</span>
                   <span className="task-tags">
                     <span className="tag tag-neutral">{t.stage}</span>
-                    <span className="tag tag-outline">Due {t.due}</span>
+                    <span className="tag tag-outline">Due {dueLabel(t.due)}</span>
                   </span>
                 </span>
               </div>

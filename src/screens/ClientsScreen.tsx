@@ -5,7 +5,7 @@ import { full, money, tierTagClass } from "../utils/format";
 import { nextApptOf, productLine, stageOf, totalAum } from "../utils/selectors";
 
 export function ClientsScreen({ store }: { store: CrmStore }) {
-  const { state, days, actions } = store;
+  const { state, actions } = store;
   const currency = config.currency;
   const aum = totalAum();
 
@@ -40,7 +40,7 @@ export function ClientsScreen({ store }: { store: CrmStore }) {
                 <td className="pos" style={{ textAlign: "right" }}>+{c.ytd.toFixed(1)}%</td>
                 <td style={{ fontSize: 12 }}>{productLine(c)}</td>
                 <td style={{ fontSize: 12 }}>{stageOf(c.id, state.deals)}</td>
-                <td style={{ fontSize: 12 }}>{nextApptOf(c.id, state.appts, days)}</td>
+                <td style={{ fontSize: 12 }}>{nextApptOf(c.id, state.appts)}</td>
               </tr>
             ))}
           </tbody>

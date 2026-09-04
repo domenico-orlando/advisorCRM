@@ -1,6 +1,7 @@
 import { STAGES } from "../data/mock";
 import type { CrmStore } from "../state/useCrmStore";
-import { byId, openTasks } from "../utils/selectors";
+import { byId, isOverdue, openTasks } from "../utils/selectors";
+import { dueLabel } from "../utils/date";
 import { stageTagClass } from "../utils/format";
 
 export function TasksScreen({ store }: { store: CrmStore }) {
@@ -8,7 +9,7 @@ export function TasksScreen({ store }: { store: CrmStore }) {
   const { tasks } = state;
   const filters = ["All", ...STAGES];
   const rows = tasks.filter((t) => state.filter === "All" || t.stage === state.filter);
-  const overdueCount = tasks.filter((t) => t.overdue && !t.done).length;
+  const overdueCount = tasks.filter(isOverdue).length;
 
   return (
     <div className="page">
@@ -45,7 +46,7 @@ export function TasksScreen({ store }: { store: CrmStore }) {
               {byId(t.client).name}
             </button>
             <div className="task-col-due">
-              <div className={"due-date" + (t.overdue && !t.done ? " overdue" : "")}>{t.due}</div>
+              <div className={"due-date" + (isOverdue(t) ? " overdue" : "")}>{dueLabel(t.due)}</div>
               <div className="text-muted">{t.priority} priority</div>
             </div>
             <div className="task-col-stage">

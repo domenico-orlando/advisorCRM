@@ -6,16 +6,21 @@ React + TypeScript + Vite. The layout, spacing, and the Modernist type/color sys
 
 ## Screens
 
-- **Calendar** — week grid or day agenda, KPI strip, "due today" task rail, book-of-business bars, and a new-appointment dialog that auto-creates a Scheduled follow-up task.
+- **Calendar** — full month grid, week grid or day agenda, navigable by period with a Today reset; KPI strip, "due today" task rail, book-of-business bars. Book on **any** date and time: click a day in the month view (or "+ Add" in a week column), then pick date, start time, duration, format and type. Each booking auto-creates a Scheduled follow-up task.
+- **Appointment confirmation emails** — confirming a booking drafts a confirmation to the client's email address (date, time, end time, format, advisor sign-off) and hands it to your mail client. Any appointment can be re-sent from the day agenda; appointments that have been confirmed carry a "Confirmation emailed" tag.
 - **Clients** — household list; click through to **Client detail**: contact & household, risk tier meter + investment profile, holdings, total portfolio value & performance, appointment history, follow-up tasks, activity timeline.
 - **Follow-ups** — filterable by pipeline stage; tick to close, → to advance.
 - **Pipeline** — four stage columns (Scheduled → Completed → Follow-up sent → Closed), ← → to move deals.
 - **Products** — 14-product catalog across Discretionary, Fixed income, Insurance, Education, Retirement, and Alternatives; per-product suitable risk bands, enable/disable for sale, a suitability matrix, and a next-best-action list.
 - **Reports** — AUM, blended YTD, assets by risk tier, product coverage, households by value.
 
-Sample data (7 households) lives in `src/data/mock.ts` and is held in memory — there is no backend, so edits made in the UI (task toggles, new appointments, deal stage moves, product enable/disable) reset on reload.
+Sample data (7 households) lives in `src/data/mock.ts` and is held in memory — there is no backend, so edits made in the UI (task toggles, new appointments, deal stage moves, product enable/disable) reset on reload. Appointments and task due dates are generated around the day the app is opened, so the calendar is never empty.
 
-Advisor name, default landing screen, whether Saturday shows in the calendar, and currency are configured in `src/config.ts`.
+Advisor name and email, firm name, default landing screen, whether Saturday shows in the week grid, and currency are configured in `src/config.ts`.
+
+### A note on email
+
+The app is a static site with no backend, so it cannot send mail itself. Confirming a booking composes the message and opens it as a `mailto:` draft in the advisor's own mail client — nothing is transmitted until the advisor sends it there, and the UI keeps a visible draft link because a `mailto:` hand-off never reports back. Swapping this for a real transactional send (Resend, SendGrid, SMTP) means adding a small API endpoint and replacing `openEmailDraft` in `src/utils/email.ts`.
 
 ## Development
 

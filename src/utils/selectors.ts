@@ -1,6 +1,7 @@
 import { CLIENTS, TIER_NAMES } from "../data/mock";
-import type { Appointment, Client, DayDef, Deal, Stage, Task } from "../types";
+import type { Appointment, Client, Deal, Stage, Task } from "../types";
 import { money } from "./format";
+import { displayTime, shortDate, timeToMinutes, todayIso } from "./date";
 
 export function totalAum(): number {
   return CLIENTS.reduce((a, c) => a + c.value, 0);
@@ -15,11 +16,27 @@ export function stageOf(clientId: string, deals: Deal[]): Stage | "—" {
   return d ? d.stage : "—";
 }
 
-export function nextApptOf(clientId: string, appts: Appointment[], days: DayDef[]): string {
-  const a = appts
-    .filter((x) => x.client === clientId)
-    .sort((p, q) => p.day - q.day || parseFloat(p.time) - parseFloat(q.time))[0];
-  return a ? days[a.day].label + " · " + a.time : "Unscheduled";
+export function sortByStart(appts: Appointment[]): Appointment[] {
+  return [...appts].sort(
+    (p, q) => p.date.localeCompare(q.date) || timeToMinutes(p.time) - timeToMinutes(q.time),
+  );
+}
+
+export function apptsOn(date: string, appts: Appointment[]): Appointment[] {
+  return sortByStart(appts.filter((a) => a.date === date));
+}
+
+/** The client's next appointment from today onwards, as "12 Sep · 9:00". */
+export function nextApptOf(clientId: string, appts: Appointment[]): string {
+  const today = todayIso();
+  const upcoming = sortByStart(appts.filter((a) => a.client === clientId && a.date >= today))[0];
+  if (!upcoming) return "Unscheduled";
+  return `${shortDate(upcoming.date)} · ${displayTime(upcoming.time)}`;
+}
+
+/** Open tasks whose due date has passed. */
+export function isOverdue(task: Task): boolean {
+  return !task.done && task.due < todayIso();
 }
 
 export interface TierBar {

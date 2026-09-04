@@ -1,17 +1,19 @@
-import type { Appointment, Client, DayDef, Deal, NextAction, Product, Stage, Task } from "../types";
+import type { Appointment, AppointmentMode, Client, Deal, NextAction, Product, Stage, Task } from "../types";
+import { addDays, startOfWeek, todayIso } from "../utils/date";
 
 export const STAGES: Stage[] = ["Scheduled", "Completed", "Follow-up sent", "Closed"];
 
-export const DAYS: DayDef[] = [
-  { dow: "Mon", dayNum: "17", label: "Mon 17", date: "Aug 17" },
-  { dow: "Tue", dayNum: "18", label: "Tue 18", date: "Aug 18" },
-  { dow: "Wed", dayNum: "19", label: "Wed 19", date: "Aug 19" },
-  { dow: "Thu", dayNum: "20", label: "Thu 20", date: "Aug 20" },
-  { dow: "Fri", dayNum: "21", label: "Fri 21", date: "Aug 21" },
-  { dow: "Sat", dayNum: "22", label: "Sat 22", date: "Aug 22" },
-];
-
-export const WEEK_LABEL = "Week of 17 August 2026";
+/**
+ * The sample book is generated around whatever day the app is opened on, so a
+ * demo never opens onto an empty calendar: appointments hang off the Monday of
+ * the current week, task due dates off today.
+ */
+const MONDAY = startOfWeek(todayIso());
+/** Mon–Fri of the current week. */
+const weekday = (offset: number) => addDays(MONDAY, offset);
+/** Mon–Fri of the following week, so every household has a next meeting. */
+const nextWeek = (offset: number) => addDays(MONDAY, 7 + offset);
+const fromToday = (offset: number) => addDays(todayIso(), offset);
 
 export const CLIENTS: Client[] = [
   {
@@ -223,29 +225,39 @@ export const NEXT_ACTIONS: NextAction[] = [
 ];
 
 export const INITIAL_APPTS: Appointment[] = [
-  { id: "a1", client: "whitfield", day: 0, time: "9:00", dur: "60 min", type: "Rollover signing", mode: "Office" },
-  { id: "a2", client: "rivera", day: 0, time: "11:30", dur: "45 min", type: "Trust distribution", mode: "Phone" },
-  { id: "a3", client: "baptiste", day: 0, time: "16:00", dur: "30 min", type: "Quarterly check-in", mode: "Video" },
-  { id: "a4", client: "lindqvist", day: 1, time: "10:00", dur: "60 min", type: "Income rider review", mode: "Office" },
-  { id: "a5", client: "petrova", day: 1, time: "14:00", dur: "30 min", type: "Suitability review", mode: "Video" },
-  { id: "a6", client: "chen", day: 2, time: "9:30", dur: "60 min", type: "Concentration plan", mode: "Video" },
-  { id: "a7", client: "whitfield", day: 2, time: "15:00", dur: "30 min", type: "Custodian follow-up", mode: "Phone" },
-  { id: "a8", client: "okonkwo", day: 3, time: "18:30", dur: "60 min", type: "Buy-sell funding", mode: "Office" },
-  { id: "a9", client: "rivera", day: 4, time: "10:30", dur: "45 min", type: "CPA joint call", mode: "Phone" },
-  { id: "a10", client: "baptiste", day: 4, time: "13:00", dur: "30 min", type: "Insurance intro", mode: "Video" },
+  { id: "a1", client: "whitfield", date: weekday(0), time: "09:00", durationMin: 60, type: "Rollover signing", mode: "Office" },
+  { id: "a2", client: "rivera", date: weekday(0), time: "11:30", durationMin: 45, type: "Trust distribution", mode: "Phone" },
+  { id: "a3", client: "baptiste", date: weekday(0), time: "16:00", durationMin: 30, type: "Quarterly check-in", mode: "Video" },
+  { id: "a4", client: "lindqvist", date: weekday(1), time: "10:00", durationMin: 60, type: "Income rider review", mode: "Office" },
+  { id: "a5", client: "petrova", date: weekday(1), time: "14:00", durationMin: 30, type: "Suitability review", mode: "Video" },
+  { id: "a6", client: "chen", date: weekday(2), time: "09:30", durationMin: 60, type: "Concentration plan", mode: "Video" },
+  { id: "a7", client: "whitfield", date: weekday(2), time: "15:00", durationMin: 30, type: "Custodian follow-up", mode: "Phone" },
+  { id: "a8", client: "okonkwo", date: weekday(3), time: "18:30", durationMin: 60, type: "Buy-sell funding", mode: "Office" },
+  { id: "a9", client: "rivera", date: weekday(4), time: "10:30", durationMin: 45, type: "CPA joint call", mode: "Phone" },
+  { id: "a10", client: "baptiste", date: weekday(4), time: "13:00", durationMin: 30, type: "Insurance intro", mode: "Video" },
+
+  // Next week — one per household, so the book always has a forward horizon
+  // however late in the week the app is opened.
+  { id: "a11", client: "whitfield", date: nextWeek(0), time: "09:30", durationMin: 45, type: "Portfolio review", mode: "Office" },
+  { id: "a12", client: "chen", date: nextWeek(0), time: "14:00", durationMin: 60, type: "Diversification plan", mode: "Video" },
+  { id: "a13", client: "rivera", date: nextWeek(1), time: "11:00", durationMin: 45, type: "Trust review", mode: "Phone" },
+  { id: "a14", client: "okonkwo", date: nextWeek(1), time: "18:00", durationMin: 60, type: "Education funding", mode: "Office" },
+  { id: "a15", client: "lindqvist", date: nextWeek(2), time: "10:00", durationMin: 60, type: "Annual review", mode: "Office" },
+  { id: "a16", client: "petrova", date: nextWeek(3), time: "15:30", durationMin: 30, type: "Quarterly call", mode: "Video" },
+  { id: "a17", client: "baptiste", date: nextWeek(4), time: "13:30", durationMin: 30, type: "Insurance review", mode: "Video" },
 ];
 
 export const INITIAL_TASKS: Task[] = [
-  { id: "t1", client: "whitfield", title: "Chase custodian on $860k rollover transfer", note: "Forms received 17 Aug. Custodian SLA is 3 business days.", due: "18 Aug", overdue: false, priority: "High", stage: "Follow-up sent" },
-  { id: "t2", client: "rivera", title: "Send distribution schedule for signature", note: "Copy Elena Rivera-Mott per household preference.", due: "17 Aug", overdue: false, priority: "High", stage: "Scheduled" },
-  { id: "t3", client: "petrova", title: "Collect private placement suitability documents", note: "Second request. Cannot proceed without signed acknowledgement.", due: "14 Aug", overdue: true, priority: "High", stage: "Follow-up sent" },
-  { id: "t4", client: "chen", title: "Draft 10b5-1 sale schedule with counsel", note: "Employer stock at 22% of net worth.", due: "19 Aug", overdue: false, priority: "Medium", stage: "Scheduled" },
-  { id: "t5", client: "lindqvist", title: "Order annuity income rider illustration", note: "Anna decides on insurance — send both copies.", due: "18 Aug", overdue: false, priority: "Medium", stage: "Scheduled" },
-  { id: "t6", client: "okonkwo", title: "Prepare buy-sell funding comparison", note: "Three funding structures, one page each.", due: "20 Aug", overdue: false, priority: "Medium", stage: "Scheduled" },
-  { id: "t7", client: "baptiste", title: "Send disability quote from carrier", note: "Self-employed; own-occupation definition required.", due: "13 Aug", overdue: true, priority: "Low", stage: "Follow-up sent" },
-  { id: "t8", client: "chen", title: "Confirm short-duration sleeve for 2028 down payment", note: "Reviewed at Mar call; verify balance drift.", due: "21 Aug", overdue: false, priority: "Low", stage: "Completed" },
-  { id: "t9", client: "okonkwo", title: "File 529 contribution confirmations", note: "State max reached for both children.", due: "12 Aug", overdue: false, priority: "Low", stage: "Closed", done: true },
-  { id: "t10", client: "lindqvist", title: "Log estate document receipt in CRM", note: "Attorney copies scanned and filed.", due: "10 Aug", overdue: false, priority: "Low", stage: "Closed", done: true },
+  { id: "t1", client: "whitfield", title: "Chase custodian on $860k rollover transfer", note: "Forms received this week. Custodian SLA is 3 business days.", due: fromToday(1), priority: "High", stage: "Follow-up sent" },
+  { id: "t2", client: "rivera", title: "Send distribution schedule for signature", note: "Copy Elena Rivera-Mott per household preference.", due: fromToday(0), priority: "High", stage: "Scheduled" },
+  { id: "t3", client: "petrova", title: "Collect private placement suitability documents", note: "Second request. Cannot proceed without signed acknowledgement.", due: fromToday(-3), priority: "High", stage: "Follow-up sent" },
+  { id: "t4", client: "chen", title: "Draft 10b5-1 sale schedule with counsel", note: "Employer stock at 22% of net worth.", due: fromToday(2), priority: "Medium", stage: "Scheduled" },
+  { id: "t5", client: "lindqvist", title: "Order annuity income rider illustration", note: "Anna decides on insurance — send both copies.", due: fromToday(1), priority: "Medium", stage: "Scheduled" },
+  { id: "t6", client: "okonkwo", title: "Prepare buy-sell funding comparison", note: "Three funding structures, one page each.", due: fromToday(3), priority: "Medium", stage: "Scheduled" },
+  { id: "t7", client: "baptiste", title: "Send disability quote from carrier", note: "Self-employed; own-occupation definition required.", due: fromToday(-4), priority: "Low", stage: "Follow-up sent" },
+  { id: "t8", client: "chen", title: "Confirm short-duration sleeve for 2028 down payment", note: "Reviewed at Mar call; verify balance drift.", due: fromToday(4), priority: "Low", stage: "Completed" },
+  { id: "t9", client: "okonkwo", title: "File 529 contribution confirmations", note: "State max reached for both children.", due: fromToday(-5), priority: "Low", stage: "Closed", done: true },
+  { id: "t10", client: "lindqvist", title: "Log estate document receipt in CRM", note: "Attorney copies scanned and filed.", due: fromToday(-7), priority: "Low", stage: "Closed", done: true },
 ];
 
 export const INITIAL_DEALS: Deal[] = [
@@ -260,7 +272,10 @@ export const INITIAL_DEALS: Deal[] = [
 
 export const INITIAL_DISABLED_PRODUCTS = ["PP-VII"];
 
-export const TIME_OPTIONS = ["9:00", "10:00", "11:30", "13:00", "14:30", "16:00"];
+/** Quick-pick slots offered next to the free-form time field. */
+export const TIME_OPTIONS = ["09:00", "10:00", "11:30", "13:00", "14:30", "16:00"];
 export const TYPE_OPTIONS = ["Portfolio review", "Annual review", "Follow-up call", "Insurance review", "Onboarding"];
+export const DURATION_OPTIONS = [30, 45, 60, 90];
+export const MODE_OPTIONS: AppointmentMode[] = ["Office", "Phone", "Video"];
 export const TIER_NAMES: Client["tier"][] = ["Conservative", "Balanced", "Growth", "Aggressive"];
 export const TIER_RISK: Record<string, number> = { Conservative: 3, Balanced: 6, Growth: 7, Aggressive: 9 };
