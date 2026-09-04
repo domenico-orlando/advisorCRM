@@ -3,7 +3,7 @@ import "./styles/app.css";
 import { config } from "./config";
 import { useCrmStore } from "./state/useCrmStore";
 import { advisorInitials } from "./utils/format";
-import { WEEK_LABEL } from "./data/mock";
+import { weekLabel } from "./utils/date";
 import type { Screen } from "./types";
 import { CalendarScreen } from "./screens/CalendarScreen";
 import { ClientsScreen } from "./screens/ClientsScreen";
@@ -36,7 +36,7 @@ function App() {
             <span className="brand-sub">Advisor Desk</span>
           </div>
           <div className="advisor-block">
-            <span className="text-muted">{WEEK_LABEL}</span>
+            <span className="text-muted">{weekLabel(store.state.viewDate)}</span>
             <span className="advisor-id">
               <span className="advisor-avatar">{advisorInitials(config.advisorName)}</span>
               <span className="advisor-name">{config.advisorName}</span>

@@ -1,9 +1,30 @@
 import { useCallback, useState } from "react";
 import {
-  CLIENTS, DAYS, INITIAL_APPTS, INITIAL_DEALS, INITIAL_DISABLED_PRODUCTS, INITIAL_TASKS, STAGES,
+  CLIENTS, INITIAL_APPTS, INITIAL_DEALS, INITIAL_DISABLED_PRODUCTS, INITIAL_TASKS, STAGES,
 } from "../data/mock";
 import { config } from "../config";
-import type { Appointment, CalMode, Deal, Screen, Stage, Task } from "../types";
+import { addDays, addMonths, startOfWeek, todayIso } from "../utils/date";
+import { buildConfirmationEmail, openEmailDraft, type EmailDraft } from "../utils/email";
+import type { Appointment, AppointmentMode, CalMode, Deal, Screen, Stage, Task } from "../types";
+
+export interface NewApptForm {
+  client: string;
+  date: string;
+  time: string;
+  durationMin: number;
+  type: string;
+  mode: AppointmentMode;
+  sendEmail: boolean;
+}
+
+/** Shown after a booking so the advisor can see — and re-open — the email. */
+export interface BookingConfirmation {
+  appointmentId: string;
+  clientName: string;
+  date: string;
+  time: string;
+  draft: EmailDraft | null;
+}
 
 interface CrmState {
   screen: Screen | null;
@@ -11,32 +32,42 @@ interface CrmState {
   disabledProducts: string[];
   selected: string;
   calMode: CalMode;
-  dayIndex: number;
+  /** Anchor date the calendar is looking at; navigation moves this. */
+  viewDate: string;
   filter: string;
   showNew: boolean;
-  newClient: string;
-  newDay: string;
-  newTime: string;
-  newType: string;
+  newAppt: NewApptForm;
+  confirmation: BookingConfirmation | null;
   appts: Appointment[];
   tasks: Task[];
   deals: Deal[];
 }
 
+function blankForm(date: string): NewApptForm {
+  return {
+    client: CLIENTS[0].id,
+    date,
+    time: "09:00",
+    durationMin: 45,
+    type: "Portfolio review",
+    mode: "Office",
+    sendEmail: true,
+  };
+}
+
 function initialState(): CrmState {
+  const today = todayIso();
   return {
     screen: null,
     family: "All",
     disabledProducts: INITIAL_DISABLED_PRODUCTS,
     selected: "whitfield",
     calMode: "week",
-    dayIndex: 0,
+    viewDate: today,
     filter: "All",
     showNew: false,
-    newClient: "whitfield",
-    newDay: "0",
-    newTime: "9:00",
-    newType: "Portfolio review",
+    newAppt: blankForm(today),
+    confirmation: null,
     appts: INITIAL_APPTS,
     tasks: INITIAL_TASKS,
     deals: INITIAL_DEALS,
@@ -47,6 +78,9 @@ function advanceStage(stage: Stage, dir: 1 | -1): Stage {
   const i = Math.max(0, Math.min(STAGES.indexOf(stage) + dir, STAGES.length - 1));
   return STAGES[i];
 }
+
+let apptSeq = 0;
+let taskSeq = 0;
 
 export function useCrmStore() {
   const [state, setState] = useState<CrmState>(initialState);
@@ -89,7 +123,6 @@ export function useCrmStore() {
   const setFamily = useCallback((family: string) => setState((s) => ({ ...s, family })), []);
   const setFilter = useCallback((filter: string) => setState((s) => ({ ...s, filter })), []);
   const setCalMode = useCallback((calMode: CalMode) => setState((s) => ({ ...s, calMode })), []);
-  const setDayIndex = useCallback((dayIndex: number) => setState((s) => ({ ...s, dayIndex })), []);
 
   const toggleProductDisabled = useCallback((code: string) => {
     setState((s) => ({
@@ -100,52 +133,138 @@ export function useCrmStore() {
     }));
   }, []);
 
-  const openNew = useCallback(() => setState((s) => ({ ...s, showNew: true })), []);
-  const closeNew = useCallback(() => setState((s) => ({ ...s, showNew: false })), []);
-  const setNewClient = useCallback((newClient: string) => setState((s) => ({ ...s, newClient })), []);
-  const setNewDay = useCallback((newDay: string) => setState((s) => ({ ...s, newDay })), []);
-  const setNewTime = useCallback((newTime: string) => setState((s) => ({ ...s, newTime })), []);
-  const setNewType = useCallback((newType: string) => setState((s) => ({ ...s, newType })), []);
+  /** Jump the calendar to a specific date (also used when a day cell is clicked). */
+  const setViewDate = useCallback((viewDate: string) => setState((s) => ({ ...s, viewDate })), []);
 
-  const confirmNew = useCallback(() => {
+  const goToToday = useCallback(() => setState((s) => ({ ...s, viewDate: todayIso() })), []);
+
+  /** Steps by month, week or day depending on the mode currently shown. */
+  const shiftView = useCallback((dir: 1 | -1) => {
     setState((s) => {
-      const dayIdx = parseInt(s.newDay, 10);
-      const apptId = "a" + (s.appts.length + 20);
-      const newAppt: Appointment = {
-        id: apptId, client: s.newClient, day: dayIdx, time: s.newTime, dur: "45 min", type: s.newType, mode: "Office",
-      };
-      const newTask: Task = {
-        id: "t" + (s.tasks.length + 20),
-        client: s.newClient,
-        title: "Prepare agenda for " + s.newType.toLowerCase(),
-        note: "Auto-created when the appointment was booked.",
-        due: DAYS[dayIdx].date.replace("Aug ", "") + " Aug",
-        overdue: false,
-        priority: "Medium",
-        stage: "Scheduled",
-      };
+      const viewDate = s.calMode === "month"
+        ? addMonths(s.viewDate, dir)
+        : s.calMode === "week"
+          ? addDays(s.viewDate, dir * 7)
+          : addDays(s.viewDate, dir);
+      return { ...s, viewDate };
+    });
+  }, []);
+
+  /** Opens the booking dialog, optionally pre-filled for a clicked day or slot. */
+  const openNew = useCallback((date?: string, time?: string) => {
+    setState((s) => {
+      const target = date ?? s.viewDate;
       return {
         ...s,
-        showNew: false,
-        appts: s.appts.concat([newAppt]),
-        tasks: [newTask].concat(s.tasks),
+        showNew: true,
+        confirmation: null,
+        viewDate: target,
+        newAppt: { ...blankForm(target), ...(time ? { time } : {}) },
       };
     });
   }, []);
 
+  const closeNew = useCallback(() => setState((s) => ({ ...s, showNew: false })), []);
+
+  const updateNewAppt = useCallback((patch: Partial<NewApptForm>) => {
+    setState((s) => ({ ...s, newAppt: { ...s.newAppt, ...patch } }));
+  }, []);
+
+  const dismissConfirmation = useCallback(() => setState((s) => ({ ...s, confirmation: null })), []);
+
+  /**
+   * Books the appointment, auto-creates the follow-up task the prototype
+   * always created, and — when asked — hands a confirmation email to the
+   * advisor's own mail client.
+   *
+   * The appointment and the draft are built here rather than inside the state
+   * updater: `mailto:` navigation only works while the click gesture is still
+   * on the stack, and updaters run later (twice, under StrictMode).
+   */
+  const confirmNew = useCallback(() => {
+    const form = state.newAppt;
+    const client = CLIENTS.find((c) => c.id === form.client) ?? CLIENTS[0];
+    apptSeq += 1;
+    taskSeq += 1;
+
+    const appt: Appointment = {
+      id: `a-new-${apptSeq}`,
+      client: form.client,
+      date: form.date,
+      time: form.time,
+      durationMin: form.durationMin,
+      type: form.type,
+      mode: form.mode,
+    };
+
+    const draft = form.sendEmail ? buildConfirmationEmail(appt, client) : null;
+    if (draft) {
+      appt.confirmationEmailedAt = new Date().toISOString();
+      openEmailDraft(draft);
+    }
+
+    const task: Task = {
+      id: `t-new-${taskSeq}`,
+      client: form.client,
+      title: `Prepare agenda for ${form.type.toLowerCase()}`,
+      note: "Auto-created when the appointment was booked.",
+      due: form.date,
+      priority: "Medium",
+      stage: "Scheduled",
+    };
+
+    setState((s) => ({
+      ...s,
+      showNew: false,
+      viewDate: appt.date,
+      appts: s.appts.concat([appt]),
+      tasks: [task].concat(s.tasks),
+      confirmation: {
+        appointmentId: appt.id,
+        clientName: client.name,
+        date: appt.date,
+        time: appt.time,
+        draft,
+      },
+    }));
+  }, [state.newAppt]);
+
+  /** Re-opens the confirmation draft for an appointment already on the book. */
+  const emailAppointment = useCallback((apptId: string) => {
+    const appt = state.appts.find((a) => a.id === apptId);
+    if (!appt) return;
+    const client = CLIENTS.find((c) => c.id === appt.client) ?? CLIENTS[0];
+    const draft = buildConfirmationEmail(appt, client);
+    openEmailDraft(draft);
+
+    const emailedAt = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      appts: s.appts.map((a) => (a.id === apptId ? { ...a, confirmationEmailedAt: emailedAt } : a)),
+      confirmation: {
+        appointmentId: appt.id,
+        clientName: client.name,
+        date: appt.date,
+        time: appt.time,
+        draft,
+      },
+    }));
+  }, [state.appts]);
+
   const screen: Screen = state.screen ?? config.defaultScreen;
-  const days = DAYS.slice(0, config.showSaturday ? 6 : 5);
   const selectedClient = CLIENTS.find((c) => c.id === state.selected) ?? CLIENTS[0];
+  const weekStart = startOfWeek(state.viewDate);
 
   return {
     state,
     screen,
-    days,
+    weekStart,
     selectedClient,
     actions: {
       go, openClient, toggleTask, advanceTask, moveDeal,
-      setFamily, setFilter, setCalMode, setDayIndex, toggleProductDisabled,
-      openNew, closeNew, setNewClient, setNewDay, setNewTime, setNewType, confirmNew,
+      setFamily, setFilter, setCalMode, toggleProductDisabled,
+      setViewDate, goToToday, shiftView,
+      openNew, closeNew, updateNewAppt, confirmNew, dismissConfirmation, emailAppointment,
     },
   };
 }

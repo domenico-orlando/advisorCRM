@@ -1,7 +1,7 @@
 export type Tier = "Conservative" | "Balanced" | "Growth" | "Aggressive";
 export type Stage = "Scheduled" | "Completed" | "Follow-up sent" | "Closed";
 export type Screen = "calendar" | "clients" | "client" | "tasks" | "pipeline" | "products" | "reports";
-export type CalMode = "week" | "day";
+export type CalMode = "month" | "week" | "day";
 
 export interface HouseholdMember {
   name: string;
@@ -66,14 +66,20 @@ export interface Product {
   approval: string;
 }
 
+export type AppointmentMode = "Office" | "Phone" | "Video";
+
 export interface Appointment {
   id: string;
   client: string;
-  day: number;
+  /** Local calendar date, `YYYY-MM-DD`. */
+  date: string;
+  /** 24-hour `HH:MM`, so appointments sort chronologically. */
   time: string;
-  dur: string;
+  durationMin: number;
   type: string;
-  mode: "Office" | "Phone" | "Video";
+  mode: AppointmentMode;
+  /** Set once a confirmation email draft has been opened for this booking. */
+  confirmationEmailedAt?: string;
 }
 
 export interface Task {
@@ -81,8 +87,8 @@ export interface Task {
   client: string;
   title: string;
   note: string;
+  /** Local calendar date, `YYYY-MM-DD`. "Overdue" is derived from it. */
   due: string;
-  overdue: boolean;
   priority: "High" | "Medium" | "Low";
   stage: Stage;
   done?: boolean;
@@ -104,15 +110,10 @@ export interface NextAction {
   value: number;
 }
 
-export interface DayDef {
-  dow: string;
-  dayNum: string;
-  label: string;
-  date: string;
-}
-
 export interface CrmConfig {
   advisorName: string;
+  advisorEmail: string;
+  firmName: string;
   defaultScreen: Screen;
   showSaturday: boolean;
   currency: "USD" | "EUR" | "GBP";
